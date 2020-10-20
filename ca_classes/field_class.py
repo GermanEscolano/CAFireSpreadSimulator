@@ -1,6 +1,7 @@
 
 import itertools
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class field:
@@ -16,7 +17,7 @@ class field:
                    'dense': 0.3}
     #Just example, should be mofified
 
-    def __init__(self, dimension, wind_velocity = 0, wind_direction = [0, 0], cell_states = None, cell_heigh = None,
+    def __init__(self, dimension, wind_velocity = 0, wind_direction = [0, 0], cell_states = None, cell_height = None,
                  cell_veg_type = None, cell_veg_density = None, cell_size = 10):
         self.dimension = dimension
         self.wind_velocity = wind_velocity
@@ -26,17 +27,17 @@ class field:
             cell_states = np.full(dimension, 1) #maybe should change 1 for a constant like FUEL
         self.cell_states = cell_states
 
-        if cell_heigh is None:
-            cell_heigh = np.zeros(dimension)
-        self.cell_heigh = cell_heigh
+        if cell_height is None:
+            cell_height = np.zeros(dimension)
+        self.cell_heigh = cell_height
 
         if cell_veg_type is None:
             cell_veg_type = np.full(dimension, self.veg_type['thickets'])
-        self.cell_veg_type = cell_veg_type
+        self.cell_veg_type = np.full(dimension, cell_veg_type)
 
         if cell_veg_density is None:
             cell_veg_density = np.full(dimension, self.veg_density['normal'])
-        self.cell_veg_density = cell_veg_density
+        self.cell_veg_density = np.full(dimension, cell_veg_density)
 
         self.cell_size = cell_size
         self.original_state = self.cell_states
@@ -55,4 +56,26 @@ class field:
 
     def reset_state(self):
         self.cell_states = self.original_state
+
+    def plot(self):
+        fig1, ax1 = plt.subplots(2, 2, figsize=(8, 6))
+        ax1[0, 0].set_title('Cell Heights')
+        h_ax = ax1[0, 0].imshow(self.cell_heigh)
+        fig1.colorbar(h_ax, ax=ax1[0, 0])
+        ax1[0, 1].set_title('Wind direction and intensity')
+        ax1[0, 1].text(0.95, 0.01, f'Wind velocity: {self.wind_velocity} m/s',
+                       verticalalignment='bottom', horizontalalignment='right',
+                       transform=ax1[0, 1].transAxes,
+                       color='green', fontsize=15)
+        ax1[0, 1].quiver([0], [0], [self.wind_direction[0]], [self.wind_direction[1]], angles='xy',
+                         scale_units='xy',
+                         scale=self.wind_velocity)
+        ax1[0, 1].set_xlim(-1, 1)
+        ax1[0, 1].set_ylim(-1, 1)
+        ax1[1, 0].set_title('Vegetation type')
+        ax1[1, 0].imshow(self.cell_veg_type)
+        ax1[1, 1].set_title('Vegetation density')
+        ax1[1, 1].imshow(self.cell_veg_density)
+        plt.draw()
+        plt.pause(0.1)
 

@@ -1,23 +1,51 @@
 import itertools
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
-from . import neighborhood
-from .field_class import field
+from ca_classes import neighborhood, field_class
+
 
 class fire_simulation:
     neighborhood_obj = neighborhood.MooreNeighborhood(neighborhood.EdgeRule.IGNORE_MISSING_NEIGHBORS_OF_EDGE_CELLS)
-
-    p_h = 0.3
+    p_h = 0.25
     C1 = 0.045
     C2 = 0.131
     C3 = 0.19
-
     verbose = False
+    period_count = 0
 
-    def __init__(self, field, fire_origin):
+
+    def __init__(self, field, fire_origin, max_period_num = 100, plot=False):
         self.field = field
         self.fire_origin = fire_origin
+        self.max_period_num = max_period_num
+        self.plot = plot
+
+    def run(self):
+        still_fire = True
+        self.period_count = 0
+        if self.plot:
+            fig2, ax2 = plt.subplots(figsize=(8, 6))
+        while self.period_count < self.max_period_num and still_fire:
+            if self.period_count % 10 == 0:
+                print(f'Period {self.period_count} / {self.max_period_num}') ################
+            if self.plot:
+                ax2.clear()
+                ax2.set_title('Ongoing simulation')
+                ax2.text(105, 10, f'Period: {self.period_count}')
+                ax2.imshow(self.field.cell_states)
+                plt.draw()
+                plt.pause(0.001)
+
+            self.evolve()
+            self.period_count += 1
+            if np.any(self.field.cell_states == 2):
+                still_fire = True
+            else:
+                still_fire = False
+        plt.close(fig2)
+        return self.field.cell_states
 
     def evolve(self):
         new_cell_states = np.copy(self.field.cell_states)
@@ -30,6 +58,7 @@ class fire_simulation:
             elif self.field.cell_states[coord] == 2:
                 new_cell_states[coord] = 3
         self.field.cell_states = new_cell_states
+        return new_cell_states
 
     def get_cell_prob_no_burn(self, coord):
         coord_neigs = self.neighborhood_obj.calculate_cell_neighbor_coordinates(coord, self.field.dimension)
@@ -43,7 +72,8 @@ class fire_simulation:
             if self.field.cell_states[coord_neig] == 2:
                 prob_propagate_cell_to_cell = self.get_prob_propagate_from_neig(coord, coord_neig)
                 list_prob_propagate_from_neig.append(prob_propagate_cell_to_cell)
-                if fire_simulation.verbose: print(f'Burning_neig: {coord_neig} ---> prob fire propagates = {prob_propagate_cell_to_cell}')
+                if fire_simulation.verbose: print(
+                    f'Burning_neig: {coord_neig} ---> prob fire propagates = {prob_propagate_cell_to_cell}')
 
         cell_prob_no_burn = np.prod([1 - elem for elem in list_prob_propagate_from_neig])
 
@@ -73,7 +103,7 @@ class fire_simulation:
 
         return self.p_h * (1 + p_veg) * (1 + p_den) * p_w * p_heigh
 
-    def set_fire(self):
+    def start_fire(self):
         for coord in self.fire_origin:
             self.field.cell_states[coord] = 2
 
@@ -82,7 +112,6 @@ class fire_simulation:
         self.C1 = C1
         self.C2 = C2
         self.C3 = C3
-
 
     @staticmethod
     def angle_between_vectors(v1, v2):
@@ -94,14 +123,48 @@ class fire_simulation:
 
 
 if __name__ == '__main__':
+    field_obj = field_class.field([11,11])
 
-    field_obj = field([10, 10])
+    fire_simul_obj = fire_simulation(field_obj, [(5, 5)])
 
-    fire_simul_obj = fire_simulation(field_obj, [(2, 2)])
+    fire_simul_obj.set_fire_parameters(1, 0.3, 0.2, 0.1)
 
-    fire_simul_obj.set_fire_parameters(1,2,3,4)
+    fire_simul_obj.start_fire()
 
-    print(fire_simulation.C1)
-    print(fire_simul_obj.C1)
+    print(fire_simul_obj.field.cell_states)
+
+    fig, ax = plt.subplots(figsize=(8,6))
+
+    ax.imshow(fire_simul_obj.field.cell_states)
+    plt.draw()
+    plt.pause(1)
+
+    for _ in range(4):
+        current_state = fire_simul_obj.evolve()
+        ax.clear()
+        ax.imshow(current_state)
+        print(current_state)
+        plt.draw()
+        plt.pause(1)
+
+    print('-----------------------------------')
+
+    field_obj2 = field_class.field([11, 11])
+
+    fire_simul_obj2 = fire_simulation(field_obj2, [(5, 5)], 4)
+
+    fire_simul_obj2.set_fire_parameters(1, 0.3, 0.2, 0.1)
+
+    fire_simul_obj2.start_fire()
+
+    print(fire_simul_obj2.field.cell_states)
+
+    final_state = fire_simul_obj2.run()
+
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+
+    ax2.imshow(final_state)
+    plt.draw()
+    plt.pause(5)
 
 
