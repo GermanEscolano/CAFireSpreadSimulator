@@ -1,0 +1,7 @@
+Param,Value
+dimension,"[40, 40]"
+cell_size,15
+fire_origin,"[(20, 20)]"
+max_period_num,15
+rep_number,100
+p_h,0.36

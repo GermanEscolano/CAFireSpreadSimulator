@@ -4,8 +4,8 @@ import numpy as np
 import itertools
 import matplotlib.pyplot as plt
 
-from ca_classes.field_class import field
-from ca_classes.fire_simulation_class import fire_simulation
+from ca_classes.field_class import Field
+from ca_classes.fire_simulation_class import Fire_simulation
 
 
 script_start_time = time.time()
@@ -33,7 +33,7 @@ for i in range(dimension[0]):
     for j in range(dimension[1]):
         test_cell_height[i, j] = 2 * np.sqrt(i ** 2 + j ** 2)
 
-field_obj = field(dimension=dimension,
+field_obj = Field(dimension=dimension,
                   wind_velocity=wind_velocity,
                   wind_direction=wind_direction,
                   cell_states=test_cell_states,
@@ -64,7 +64,7 @@ while replication_counter <= num_replications:
 
     field_obj.reset_state()
 
-    fire_simulation_obj = fire_simulation(field_obj, [(50, 50)])
+    fire_simulation_obj = Fire_simulation(field_obj, [(50, 50)])
 
     fire_simulation_obj.start_fire()
 
